@@ -4,7 +4,7 @@
   "name": "Pakseal",
   "description": "Review and change the permissions of cpak applications.",
   "version": "0.1.0",
-  "image": "codeberg.org/nosini/pakseal@sha256:e993a44fafd7d882355da360d4c5fd54d19f1996dea58a50d069e51c747d888a",
+  "image": "codeberg.org/nosini/pakseal@sha256:7e27a0c789a344357e38303d8a9339aa47690d110243bc7f8816f54715c029f8",
   "binaries": [
     "/usr/bin/pakseal"
   ],
@@ -57,7 +57,8 @@
     ],
     "env": [
       "PAKSEAL_ORIGIN=codeberg.org/nosini/pakseal",
-      "GSK_RENDERER=cairo"
+      "GSK_RENDERER=cairo",
+      "GDK_DISABLE=gl,vulkan"
     ]
   }
 }

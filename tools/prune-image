@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+"""Delete the packages Pakseal never loads from an Alpine image.
+
+Alpine's gtk4.0 depends on GStreamer for its video playback module, and
+GStreamer pulls in Mesa, LLVM, GTK 3 and a stack of codecs: about 400 MiB that
+Pakseal, which shows no video and renders with cairo, never touches. apk will
+not remove a dependency of an installed package, so this reads apk's database,
+keeps everything the packages in /etc/apk/world need without that one edge,
+and deletes the files of the rest along with the video module itself.
+
+    prune-image [--root DIR] [--dry-run]
+"""
+import argparse
+import os
+import sys
+
+# Dependencies to ignore: (package, prefix of the package it depends on).
+CUT = (("gtk4.0", "gst"),)
+MEDIA_MODULES = "usr/lib/gtk-4.0/4.0.0/media"
+
+
+def read_database(root):
+    with open(os.path.join(root, "lib/apk/db/installed")) as handle:
+        blocks = handle.read().split("\n\n")
+    packages = {}
+    for block in blocks:
+        package = {"depends": [], "provides": [], "install_if": [], "files": []}
+        directory = ""
+        for line in block.splitlines():
+            if len(line) < 2 or line[1] != ":":
+                continue
+            key, value = line[0], line[2:]
+            if key == "P":
+                package["name"] = value
+            elif key == "D":
+                package["depends"] += value.split()
+            elif key == "p":
+                package["provides"] += value.split()
+            elif key == "i":
+                package["install_if"] += value.split()
+            elif key == "F":
+                directory = value
+            elif key == "R":
+                package["files"].append(os.path.join(directory, value))
+        if "name" in package:
+            packages[package["name"]] = package
+    return packages
+
+
+def dependency_name(dependency):
+    for separator in ("=", ">", "<", "~"):
+        dependency = dependency.split(separator)[0]
+    return dependency
+
+
+def keep(root, packages):
+    providers = {}
+    for name, package in packages.items():
+        providers[name] = name
+        for provided in package["provides"]:
+            providers.setdefault(dependency_name(provided), name)
+    with open(os.path.join(root, "etc/apk/world")) as handle:
+        world = [dependency_name(line.strip()) for line in handle if line.strip()]
+    kept, pending = set(), [providers[name] for name in world if name in providers]
+    while True:
+        while pending:
+            name = pending.pop()
+            if name in kept:
+                continue
+            kept.add(name)
+            for dependency in packages[name]["depends"]:
+                if dependency.startswith("!"):
+                    continue
+                target = providers.get(dependency_name(dependency))
+                if target is None or any(name == source and target.startswith(prefix) for source, prefix in CUT):
+                    continue
+                pending.append(target)
+        # apk installs a package whose install_if names only installed
+        # packages, such as the precompiled bytecode of python3.
+        pending = [
+            name
+            for name, package in packages.items()
+            if name not in kept
+            and package["install_if"]
+            and all(providers.get(dependency_name(entry)) in kept for entry in package["install_if"])
+        ]
+        if not pending:
+            return kept
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default="/")
+    parser.add_argument("--dry-run", action="store_true")
+    options = parser.parse_args()
+
+    packages = read_database(options.root)
+    kept = keep(options.root, packages)
+    removed = sorted(set(packages) - kept)
+    owned = {path for name in kept for path in packages[name]["files"]}
+    paths = [path for name in removed for path in packages[name]["files"] if path not in owned]
+    media = os.path.join(options.root, MEDIA_MODULES)
+    if os.path.isdir(media):
+        paths += [os.path.join(MEDIA_MODULES, entry) for entry in os.listdir(media)]
+
+    print(f"removing {len(removed)} packages: {' '.join(removed)}", file=sys.stderr)
+    if options.dry_run:
+        return
+    directories = set()
+    for path in paths:
+        full = os.path.join(options.root, path)
+        if os.path.lexists(full) and not os.path.isdir(full) or os.path.islink(full):
+            os.remove(full)
+            directories.add(os.path.dirname(full))
+    # Remove the directories this emptied, deepest first.
+    for directory in sorted(directories, key=len, reverse=True):
+        while directory.startswith(os.path.join(options.root, "usr")) or directory.startswith(os.path.join(options.root, "etc")):
+            try:
+                os.rmdir(directory)
+            except OSError:
+                break
+            directory = os.path.dirname(directory)
+
+
+if __name__ == "__main__":
+    main()

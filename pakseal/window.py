@@ -246,7 +246,7 @@ class Window(Adw.ApplicationWindow):
         self.window_title.set_subtitle("")
         self.empty.set_icon_name(icon or "security-high-symbolic")
         self.empty.set_title(title or "No Application Selected")
-        self.empty.set_description(description or "Select an application to see and change its permissions")
+        self.empty.set_description(GLib.markup_escape_text(description or "Select an application to see and change its permissions"))
         self.content_stack.set_visible_child_name("empty")
 
     # Permission page
