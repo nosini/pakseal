@@ -1,0 +1,2 @@
+#!/bin/sh
+PYTHONPATH=/usr/lib/pakseal${PYTHONPATH:+:$PYTHONPATH} exec python3 -m pakseal "$@"

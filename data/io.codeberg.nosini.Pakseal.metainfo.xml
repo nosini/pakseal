@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.codeberg.nosini.Pakseal</id>
+  <name>Pakseal</name>
+  <summary>Review and change the permissions of cpak applications</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+  <developer id="org.codeberg.nosini">
+    <name>Nosini</name>
+  </developer>
+  <description>
+    <p>
+      Pakseal lists the applications installed with cpak and shows the
+      permissions each one runs with. You can narrow or widen them, share
+      folders, set environment variables and return to what the manifest asks
+      for at any time.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.codeberg.nosini.Pakseal.desktop</launchable>
+  <url type="homepage">https://codeberg.org/nosini/pakseal</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-09-29"/>
+  </releases>
+</component>

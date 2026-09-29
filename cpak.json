@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Containerpak/cpak/v2/schema/manifest-v3.json",
+  "manifest_version": "3.0",
+  "name": "Pakseal",
+  "description": "Review and change the permissions of cpak applications.",
+  "version": "0.1.0",
+  "image": "codeberg.org/nosini/pakseal@sha256:e993a44fafd7d882355da360d4c5fd54d19f1996dea58a50d069e51c747d888a",
+  "binaries": [
+    "/usr/bin/pakseal"
+  ],
+  "desktop_entries": [
+    "/usr/share/applications/io.codeberg.nosini.Pakseal.desktop"
+  ],
+  "form_factors": [
+    "desktop"
+  ],
+  "dependencies": [],
+  "addons": [],
+  "idle_time": 0,
+  "override": {
+    "displayX11": false,
+    "socketWayland": true,
+    "socketPulseAudio": false,
+    "socketSshAgent": false,
+    "socketCups": false,
+    "socketGpgAgent": false,
+    "bluetooth": false,
+    "deviceDri": false,
+    "deviceKvm": false,
+    "deviceShm": false,
+    "deviceAlsa": false,
+    "deviceVideo": false,
+    "deviceFuse": false,
+    "deviceTun": false,
+    "deviceUsb": false,
+    "deviceSerial": false,
+    "deviceInput": false,
+    "deviceTTY": false,
+    "deviceAll": false,
+    "notification": false,
+    "openURI": false,
+    "hostApplications": false,
+    "network": false,
+    "process": false,
+    "userNamespaces": false,
+    "asRoot": false,
+    "memoryMaxMB": 0,
+    "cpuQuota": 0,
+    "pidsMax": 0,
+    "hostActions": [
+      {
+        "provider": "cpak",
+        "capabilities": [
+          "permissions"
+        ]
+      }
+    ],
+    "env": [
+      "PAKSEAL_ORIGIN=codeberg.org/nosini/pakseal",
+      "GSK_RENDERER=cairo"
+    ]
+  }
+}

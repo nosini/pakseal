@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Pakseal
+GenericName=Permission Manager
+Comment=Review and change the permissions of cpak applications
+Exec=pakseal
+Icon=io.codeberg.nosini.Pakseal
+Terminal=false
+Categories=GTK;GNOME;Settings;Security;
+Keywords=cpak;permissions;sandbox;security;privacy;
+StartupNotify=true

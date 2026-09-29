@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+"""A stand-in for `cpak permissions` that keeps its state in one JSON file.
+
+Run pakseal against it without installing anything:
+
+    PAKSEAL_CPAK=tools/fake-cpak python3 -m pakseal
+
+The state lives in $PAKSEAL_FAKE_STATE, or fake-cpak.json in the temporary
+directory, and is seeded with a few sample applications.
+"""
+import json
+import os
+import sys
+import tempfile
+
+STATE = os.environ.get("PAKSEAL_FAKE_STATE") or os.path.join(tempfile.gettempdir(), "fake-cpak.json")
+
+SAMPLES = [
+    {
+        "origin": "github.com/bottlesdevs/bottles",
+        "name": "Bottles",
+        "version": "main",
+        "branch": "main",
+        "manifest": {
+            "socketWayland": True, "displayX11": True, "socketPulseAudio": True, "deviceDri": True,
+            "network": True, "notification": True, "openURI": True,
+            "filesystem": [{"path": "xdg-download", "access": "read-write"}],
+            "filePicker": {"openFile": True, "openFolder": True},
+            "clipboard": {"hostToApp": True, "appToHost": True},
+        },
+        "override": None,
+    },
+    {
+        "origin": "github.com/containerpak/vscode",
+        "name": "Visual Studio Code",
+        "version": "main",
+        "branch": "main",
+        "manifest": {
+            "socketWayland": True, "deviceDri": True, "network": True, "socketSshAgent": True,
+            "filesystem": [{"path": "home", "access": "read-write"}],
+            "hostActions": [{"provider": "containers", "capabilities": ["read", "manage-owned", "exec-owned"]}],
+            "env": ["ELECTRON_OZONE_PLATFORM_HINT=wayland"],
+            "sessionBus": {"talk": [{"name": "org.freedesktop.secrets"}]},
+        },
+        "override": {
+            "socketWayland": True, "deviceDri": True, "network": True,
+            "filesystem": [{"path": "home/Projects", "access": "read-write"}],
+            "hostActions": [{"provider": "containers", "capabilities": ["read"]}],
+            "env": ["ELECTRON_OZONE_PLATFORM_HINT=wayland"],
+            "sessionBus": {"talk": [{"name": "org.freedesktop.secrets"}]},
+        },
+    },
+    {
+        "origin": "github.com/example/player",
+        "name": "Player",
+        "version": "v2",
+        "release": "v2",
+        "manifest": {"socketWayland": True, "socketPulseAudio": True, "network": True, "memoryMaxMB": 2048},
+        "override": None,
+    },
+    {
+        "origin": "github.com/example/player",
+        "name": "Player",
+        "version": "main",
+        "branch": "main",
+        "manifest": {"socketWayland": True, "socketPulseAudio": True, "network": True, "fsHostHome": True},
+        "override": None,
+    },
+    {
+        "origin": "codeberg.org/nosini/pakseal",
+        "name": "Pakseal",
+        "version": "main",
+        "branch": "main",
+        "manifest": {"socketWayland": True, "hostActions": [{"provider": "cpak", "capabilities": ["permissions"]}]},
+        "override": None,
+    },
+]
+
+
+def load():
+    try:
+        with open(STATE) as handle:
+            return json.load(handle)
+    except FileNotFoundError:
+        return SAMPLES
+
+
+def save(apps):
+    with open(STATE, "w") as handle:
+        json.dump(apps, handle, indent=2)
+
+
+def fail(message):
+    print(f"Error: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def option(arguments, name):
+    try:
+        return arguments[arguments.index(name) + 1]
+    except (ValueError, IndexError):
+        fail(f"missing {name}")
+
+
+def main(arguments):
+    if arguments[:1] != ["permissions"] or len(arguments) < 2:
+        fail("only the permissions command is supported")
+    apps = load()
+    action = arguments[1]
+    if action == "list":
+        print(json.dumps(apps))
+        return
+    origin, version = option(arguments, "--origin").lower(), option(arguments, "--package-version")
+    matches = [app for app in apps if app["origin"] == origin and app["version"] == version]
+    if not matches:
+        fail(f"application {origin} ({version}) is not installed")
+    app = matches[0]
+    if action == "set":
+        policy = json.loads(sys.stdin.read())
+        for entry in policy.get("filesystem") or []:
+            if entry["path"] == "host" and entry["access"] != "read-only":
+                fail("filesystem host scope can only be read-only")
+        if policy.get("hostNetwork") and not policy.get("network"):
+            fail("hostNetwork requires network access")
+        app["override"] = policy
+    elif action == "reset":
+        app["override"] = None
+    else:
+        fail(f'unknown permissions action "{action}"')
+    save(apps)
+    print(json.dumps(app))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
