@@ -1,6 +1,9 @@
 # The image cpak runs pakseal from. Build it with `make image`.
 FROM docker.io/library/alpine:3.22
 
+LABEL org.opencontainers.image.source="https://github.com/nosini/pakseal" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later"
+
 COPY tools/prune-image /usr/local/sbin/prune-image
 
 # gtk4.0 depends on GStreamer, which pulls in Mesa and LLVM. Pakseal shows no
@@ -18,8 +21,8 @@ RUN apk add --no-cache \
 
 COPY data/pakseal /usr/bin/pakseal
 COPY pakseal/*.py pakseal/style.css /usr/lib/pakseal/pakseal/
-COPY data/io.codeberg.nosini.Pakseal.desktop /usr/share/applications/
-COPY data/io.codeberg.nosini.Pakseal.metainfo.xml /usr/share/metainfo/
-COPY data/io.codeberg.nosini.Pakseal.svg /usr/share/icons/hicolor/scalable/apps/
+COPY data/eu.nosini.Pakseal.desktop /usr/share/applications/
+COPY data/eu.nosini.Pakseal.metainfo.xml /usr/share/metainfo/
+COPY data/eu.nosini.Pakseal.svg /usr/share/icons/hicolor/scalable/apps/
 
 RUN python3 -m compileall -q /usr/lib/pakseal

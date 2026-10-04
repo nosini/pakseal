@@ -68,7 +68,7 @@ SAMPLES = [
         "override": None,
     },
     {
-        "origin": "codeberg.org/nosini/pakseal",
+        "origin": "github.com/nosini/pakseal",
         "name": "Pakseal",
         "version": "main",
         "branch": "main",

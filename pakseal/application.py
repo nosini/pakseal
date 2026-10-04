@@ -49,7 +49,7 @@ class Application(Adw.Application):
             version=VERSION,
             comments="Review and change the permissions of cpak applications",
             license_type=Gtk.License.AGPL_3_0,
-            website="https://codeberg.org/nosini/pakseal",
+            website="https://github.com/nosini/pakseal",
             developer_name="Nosini",
         )
         about.present(self.get_active_window())

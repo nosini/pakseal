@@ -1,4 +1,4 @@
-IMAGE ?= codeberg.org/nosini/pakseal
+IMAGE ?= ghcr.io/nosini/pakseal
 TAG ?= latest
 PYTHON ?= python3
 
@@ -13,7 +13,7 @@ run:
 
 # Run against sample data, without cpak.
 run-fake:
-	PAKSEAL_CPAK=tools/fake-cpak $(PYTHON) -m pakseal
+	PAKSEAL_CPAK=tools/fake-cpak PAKSEAL_ORIGIN=github.com/nosini/pakseal $(PYTHON) -m pakseal
 
 image:
 	podman build -t $(IMAGE):$(TAG) -f Containerfile .

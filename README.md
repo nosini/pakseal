@@ -47,23 +47,36 @@ make test
 
 To run the interface you need PyGObject, GTK 4 and libadwaita 1.5 or newer.
 `make run-fake` uses `tools/fake-cpak`, which keeps sample applications in one
-JSON file, so you don't need cpak. `make run` uses the `cpak` on your `PATH`.
+JSON file, so you don't need cpak. It also sets `PAKSEAL_ORIGIN` to the GitHub
+repository so Pakseal's own sample entry cannot be edited.
+`make run` uses the `cpak` on your `PATH`.
 That cpak must include the `permissions` command. Set `PAKSEAL_CPAK` to use
 another binary.
 
 ## Packaging
 
-A manifest v3 image has to be pinned by digest. Build the image, push it, and
-write the digest into `cpak.json`:
+A manifest v3 image has to be pinned by digest. Images are published to
+`ghcr.io/nosini/pakseal`; the manifest is hosted at
+[`github.com/nosini/pakseal`](https://github.com/nosini/pakseal).
+Authenticate to GHCR with a token that can publish packages, then build the
+image, push it, and write the digest into `cpak.json`:
 
 ```sh
+podman login ghcr.io
 make image
 make pin
 ```
 
-`IMAGE` defaults to `codeberg.org/nosini/pakseal`. If the package is published
-from another origin, also change `PAKSEAL_ORIGIN` in the manifest's `env`.
-Pakseal uses that value to recognise its own entry.
+`IMAGE` defaults to `ghcr.io/nosini/pakseal`. `make pin` records the digest
+returned by the push; commit the updated `cpak.json` before publishing the
+manifest. Set the GHCR package's visibility to public so installations can
+pull it without registry credentials.
+
+`PAKSEAL_ORIGIN` in the manifest's `env` is `github.com/nosini/pakseal`.
+It identifies the repository hosting the manifest, independently of the image
+registry. Pakseal uses it to recognise its own entry and prevent changes to
+its own permissions. If the manifest is published from another repository,
+change this value to match that repository's origin.
 
 ## License
 
